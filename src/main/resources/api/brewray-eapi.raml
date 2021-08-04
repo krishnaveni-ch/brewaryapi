@@ -1,0 +1,69 @@
+#%RAML 1.0
+title: brewray-eapi
+traits:
+  client-id-required:
+    headers:
+      client_id:
+        type: string
+        required: true
+      client_secret:
+        type: string
+        required: true
+types:
+  response_order_200: !include examples/success/success_200.json
+  response_order_400: !include examples/error.raml
+  response_order_201: !include examples/success/success_201.json
+  add_data: !include types/add.raml
+/brewaries:
+  get:
+    is: [client-id-required]
+    queryParameters: 
+      source:
+        description: name of the url
+        type: string
+        required: false
+      city:
+        description: name of the url
+        type: string
+        required: false
+      state:
+        description: name of the url
+        type: string
+        required: false  
+      states:
+        description: name of multiple states
+        type: array
+        required: false
+      cities:
+        description: name of multiple cities
+        type: array
+        required: false
+    responses:
+      200:
+        body:
+          application/json:
+            type: response_order_200 
+      404:
+        body:
+          application/json:
+            type: response_order_400
+  /create:
+  post:
+    is: [client-id-required]
+    body:
+      application/json:
+        type: add_data
+    responses:
+     201:
+        body:
+          application/json:
+            type: response_order_201 
+  /{id}:
+    delete:
+     is: [client-id-required]
+     responses:
+      200:
+        body:
+          application/json:
+            type: response_order_200 
+          

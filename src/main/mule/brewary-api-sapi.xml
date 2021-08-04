@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="c30a5ab1-13e3-49a5-9653-ecf66ea2a1f3" >
+		<http:request-connection connectionIdleTimeout="60000"/>
+	</http:request-config>
+	<sub-flow name="cities-api-subflow" doc:id="0f6a3958-67e3-4221-8d82-9fb3a54787b8" >
+		<ee:transform doc:name="Transform Message" doc:id="d8f50fc4-c00a-48ac-97a2-3dee1ed65831" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="cy1" ><![CDATA[%dw 2.0
+output application/json
+---
+[]]]></ee:set-variable>
+				<ee:set-variable variableName="cities1" ><![CDATA[%dw 2.0
+output application/json
+---
+attributes.queryParams.cities]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<foreach doc:name="For Each" doc:id="17f82264-34ff-4a80-866e-ce0fd005ad44" collection='#[vars.cities1 splitBy ","]'>
+			<ee:transform doc:name="Transform Message" doc:id="37a6d0f2-2f8b-495c-bbb1-55f770bffab7">
+			<ee:message>
+			</ee:message>
+				<ee:variables>
+					<ee:set-variable variableName="singleCity"><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
+				</ee:variables>
+		</ee:transform>
+			<http:request method="GET" doc:name="Request" doc:id="0f7952ca-99da-40b5-94f2-b0b1c33f9b0f" config-ref="HTTP_Request_configuration" url="https://api.openbrewerydb.org/breweries" />
+			<ee:transform doc:name="cities data" doc:id="0dfa4c82-7634-4b6c-9b74-b0fcaf3426a9">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload filter($.city == vars.singleCity) map {
+	id: $.id,
+	name: $.name,
+	brewary_type: $.brewery_type,
+	street: $.street,
+	address_2: $.address_2,
+	address_3: $.address_3,
+	city: $.city,
+	country_province: $.county_province,
+	state: $.state,
+	postal_code: $.postal_code,
+	country: $.country,
+	longitude: $.longitude,
+	lattitude: $.latitude,
+	phone: $.phone,
+	website_url: $.website_url,
+	updated_at: $.updated_at,
+	created_at: $.created_at
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			<ee:transform doc:name="Transform Message" doc:id="6fae1914-c70d-4a5a-8ed8-db62a1600af1" >
+				<ee:message >
+				</ee:message>
+				<ee:variables >
+					<ee:set-variable variableName="cy1" ><![CDATA[%dw 2.0
+output application/json
+---
+vars.cy1 ++ payload]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+		</foreach>
+		<ee:transform doc:name="Transform Message" doc:id="f9c4df2e-81e0-4664-808e-70389e7aa27c" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+vars.cy1]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</sub-flow>
+	<sub-flow name="states-api-subflow" doc:id="eac17460-a3ea-4771-b3e0-97af92340030" >
+		<ee:transform doc:name="Transform Message" doc:id="47cd5636-3db1-4e1c-a412-a68af38e6c98" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="st1" ><![CDATA[%dw 2.0
+output application/json
+---
+[]]]></ee:set-variable>
+				<ee:set-variable variableName="states" ><![CDATA[%dw 2.0
+output application/json
+---
+attributes.queryParams.states]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<foreach doc:name="For Each" doc:id="dc3d2d36-35a6-40de-9ec5-d80bbafa4148" collection='#[vars.states splitBy ","]'>
+			<ee:transform doc:name="Transform Message" doc:id="f2a6f6b7-45ce-4df0-859a-3b6adba03e7b">
+			<ee:message>
+			</ee:message>
+				<ee:variables>
+					<ee:set-variable variableName="singleState"><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
+				</ee:variables>
+		</ee:transform>
+			<http:request method="GET" doc:name="Request" doc:id="13ee0a9d-44c4-4025-8b57-b6eccce8bf42" config-ref="HTTP_Request_configuration" url="https://api.openbrewerydb.org/breweries" />
+			<ee:transform doc:name="state data" doc:id="4cded47c-0798-4f36-8c4b-981a13796774">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload filter($.city == vars.singleState) map {
+	id: $.id,
+	name: $.name,
+	brewary_type: $.brewery_type,
+	street: $.street,
+	address_2: $.address_2,
+	address_3: $.address_3,
+	city: $.city,
+	country_province: $.county_province,
+	state: $.state,
+	postal_code: $.postal_code,
+	country: $.country,
+	longitude: $.longitude,
+	lattitude: $.latitude,
+	phone: $.phone,
+	website_url: $.website_url,
+	updated_at: $.updated_at,
+	created_at: $.created_at
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			<ee:transform doc:name="Transform Message" doc:id="6ea89296-f9c1-4037-8057-22a4887f4538" >
+				<ee:message >
+				</ee:message>
+				<ee:variables >
+					<ee:set-variable variableName="st1" ><![CDATA[%dw 2.0
+output application/json
+---
+vars.st1 ++ payload]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+		</foreach>
+		<ee:transform doc:name="Transform Message" doc:id="c0802991-afab-4051-9dd5-6955846609f4" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+vars.st1]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</sub-flow>
+</mule>

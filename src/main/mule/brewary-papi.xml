@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<sub-flow name="brewary-papiSub_Flow" doc:id="5e3030db-e24e-4b04-a760-76d745599cd8" >
+		<ee:transform doc:name="Transform Message" doc:id="691b69ae-21a5-4e84-8b8a-357b81f7701d" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload map
+	{
+		id: $.id,
+     name: $.name,
+    brewary_type: $.brewery_type,
+    street: $.street,
+    address_2: if($.street != null) $.address_2 else null,
+    address_3: $.address_3,
+    city: $.city,
+    country_province: $.county_province,
+    state: $.state,
+    postal_code: ($.postal_code splitBy "-")[0],
+    country: $.country,
+    longitude: if($.longitude != null) round($.longitude as Number) else null,
+    lattitude: if($.lattitude != null) round($.lattitude as Number) else null,
+    phone: ($.phone)[-5 to -1],
+    website_url:$.website_url,
+    updated_at: if($.updated_at !=null) $.updated_at as Date else null,
+    created_at : if($.created_at !=null) $.created_at as Date else null
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="670e5c1e-08c7-42ae-bb3d-baecd611727b" message="#[payload]"/>
+	</sub-flow>
+</mule>

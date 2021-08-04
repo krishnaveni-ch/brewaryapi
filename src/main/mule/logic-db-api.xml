@@ -1,0 +1,257 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="ded6cbb4-bd3b-4283-9a99-0dfb260c662d" >
+		<db:my-sql-connection host="${db.host}" port="${db.port}" user="${db.username}" password="${db.password}" database="${db.database}" />
+	</db:config>
+	<sub-flow name="insert-flow" doc:id="879f6d6c-ff5a-4d9b-a12e-81b7b85117a4" >
+		<ee:transform doc:name="Transform Message" doc:id="09684607-47c4-47ee-aa0a-eef1014178d3" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<db:insert doc:name="Insert" doc:id="5c72bdec-87d5-4a6a-ab4a-712b51bf9a72" config-ref="Database_Config">
+			<db:sql ><![CDATA[insert into brewaries values(:id,
+:name,
+:brewery_type,
+:street,
+:address_2,
+:address_3,
+:city,
+:county_province,
+:state,
+:postal_code,
+:country,
+:longitude,
+:latitude,
+:phone,
+:website_url,
+:updated_at,
+:created_at
+)]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+"id": payload.id,
+"name": payload.name,
+"brewery_type": payload.brewery_type,
+"street": payload.street,
+"address_2": payload.address_2,
+"address_3": payload.address_3,
+"city": payload.city,
+"county_province": payload.county_province,
+"state": payload.state,
+"postal_code": payload.postal_code,
+"country": payload.country,
+"longitude": payload.longitude,
+"latitude": payload.latitude,
+"phone": payload.phone,
+"website_url": payload.website_url,
+"updated_at": payload.update_at,
+"created_at": payload.created_at
+}]]]></db:input-parameters>
+		</db:insert>
+		<logger level="INFO" doc:name="Logger" doc:id="bfe7c8ea-b4b5-41c0-aa29-f40598071082" message="#[payload]"/>
+	</sub-flow>
+	<sub-flow name="logic-db-apiSub_Flow" doc:id="1f5ca147-9cea-49a3-8ae2-64dcb9e88c53" >
+		<ee:transform doc:name="Transform Message" doc:id="40ccf651-61fc-4a08-bc5f-b8d5c9149329">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="city"><![CDATA[attributes.queryParams.city]]></ee:set-variable>
+				<ee:set-variable variableName="state"><![CDATA[attributes.queryParams.state]]></ee:set-variable>
+				<ee:set-variable variableName="states"><![CDATA[attributes.queryParams.states]]></ee:set-variable>
+				<ee:set-variable variableName="cities"><![CDATA[attributes.queryParams.'cities']]></ee:set-variable>
+				<ee:set-variable variableName="source"><![CDATA[attributes.queryParams.'source']]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<ee:transform doc:name="Transform Message" doc:id="9ea52491-8241-4d93-94a7-9831d52878ef">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{	
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="cities"><![CDATA[%dw 2.0
+output application/json
+---
+attributes.queryParams.cities]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="e67c5b05-2aec-4bca-a1de-5b473e6232cd" message="#[payload]" />
+	</sub-flow>
+	<sub-flow name="delete-flow" doc:id="79c4f766-96f8-4bef-8642-220bd2de34e2" >
+		<db:delete doc:name="Delete" doc:id="9b6029b8-f745-444a-9854-52890912f79f" config-ref="Database_Config">
+			<db:sql ><![CDATA[delete 
+from brewaries 
+where id =:id]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	id: vars.id
+}]]]></db:input-parameters>
+		</db:delete>
+		<logger level="INFO" doc:name="Logger" doc:id="1ae66b99-3bcf-43d1-99d5-0aff16d36028" message="#[payload]"/>
+	</sub-flow>
+	<sub-flow name="retrive-flow" doc:id="7eee9042-2edc-486d-9b05-975ea76b218f">
+		<choice doc:name="Choice" doc:id="48526b20-c153-43d0-b4db-21f8b94905fa">
+			<when expression="#[attributes.queryParams.state !=null&#10; and attributes.queryParams.city !=null]">
+				<logger level="INFO" doc:name="Logger" doc:id="bf89620c-b035-4593-883d-c772ee22dd60" message="#[attributes.queryParams.city ++ attributes.queryParams.state]" />
+				<ee:transform doc:name="Transform Message" doc:id="12b1c02f-87bb-4631-a952-e7ed16d4c0b4">
+					<ee:message>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="city"><![CDATA[%dw 2.0
+output application/json
+---
+attributes.queryParams.city]]></ee:set-variable>
+						<ee:set-variable variableName="state"><![CDATA[%dw 2.0
+output application/json
+---
+attributes.queryParams.state]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<logger level="INFO" doc:name="Logger" doc:id="e8f4b08b-8703-4468-8442-d8608c107a22" message="#[vars.city ++ vars.state]" />
+				<db:select doc:name="CityState" doc:id="3ba3d76a-963b-44bd-87a5-705a2714c873" config-ref="Database_Config">
+			<db:sql><![CDATA[select * from brewaries
+ where state =:state and city =:city]]></db:sql>
+			<db:input-parameters><![CDATA[#[{
+	state: vars.state,
+	city: vars.city
+}]]]></db:input-parameters>
+		</db:select>
+				<ee:transform doc:name="Transform Message" doc:id="d361fc95-d92b-4a2e-905f-cfb4c1d4b8a5" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<flow-ref doc:name="Flow Reference" doc:id="2d6e0cdd-872b-419c-a719-de119b5f2e17" name="brewary-papiSub_Flow"/>
+			</when>
+			<when expression="#[attributes.queryParams.states !=null and attributes.queryParams.source !=null]">
+				<choice doc:name="Choice" doc:id="383a66a1-32e4-49bf-b936-05c2fb36bacc">
+					<when expression="#[attributes.queryParams.source=='db']">
+						<ee:transform doc:name="Transform Message" doc:id="d6ceeb25-82cb-4a74-bf69-dcf5a9312c57">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+attributes.queryParams.states]]></ee:set-payload>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="st"><![CDATA[%dw 2.0
+output application/json
+---
+[]]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+						<foreach doc:name="For Each" doc:id="0c7a59c9-a6e2-47bc-b410-cacf31ce13aa" collection='#[payload splitBy ","]'>
+							<db:select doc:name="StatesDb" doc:id="bc6fec3b-bb15-4b36-bc28-c10052f6f1ff" config-ref="Database_Config">
+			<db:sql><![CDATA[select * from brewaries
+ where state =:state]]></db:sql>
+			<db:input-parameters><![CDATA[#[{
+	state: payload
+	}]]]></db:input-parameters>
+		</db:select>
+							<ee:transform doc:name="Transform Message" doc:id="a3d479e3-9393-439f-b02f-dd27b17bf87b">
+						<ee:message>
+						</ee:message>
+						<ee:variables>
+							<ee:set-variable variableName="st"><![CDATA[%dw 2.0
+output application/java
+---
+vars.st ++ payload]]></ee:set-variable>
+						</ee:variables>
+					</ee:transform>
+				</foreach>
+						<ee:transform doc:name="Transform Message" doc:id="49d4c110-2923-4946-a860-b86bb7259008">
+							<ee:message>
+								<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+vars.st]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+						<flow-ref doc:name="Flow Reference" doc:id="b756b708-55fc-45ec-9a90-0660c1c04beb" name="brewary-papiSub_Flow" />
+					</when>
+					<otherwise>
+						<flow-ref doc:name="StatesApi" doc:id="7c594cbf-beae-4495-b1af-38cafe597030" name="states-api-subflow" />
+						<flow-ref doc:name="Flow Reference" doc:id="2caac039-bf4d-46c7-9c99-29d13f299a47" name="brewary-papiSub_Flow" />
+					</otherwise>
+				</choice>
+
+			</when>
+			<when expression="#[attributes.queryParams.source !=null &#10;and attributes.queryParams.cities !=null]">
+				<choice doc:name="Choice" doc:id="fe6eefaa-88eb-4ea8-b9b5-bb5dbad6e102">
+					<when expression="#[attributes.queryParams.source=='db']">
+						<ee:transform doc:name="Transform Message" doc:id="cd2c14aa-ecd5-4ffa-9c81-8705e8d72532">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+attributes.queryParams.cities ]]></ee:set-payload>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="cy"><![CDATA[%dw 2.0
+output application/json
+---
+[]]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+						<foreach doc:name="For Each" doc:id="115c1fe5-b84a-4753-9d13-069d9ebf55a4" collection='#[payload splitBy ","]'>
+							<db:select doc:name="CitiesDb" doc:id="da899d93-1200-4ac5-bf51-5229b9e48811" config-ref="Database_Config">
+			<db:sql><![CDATA[select * from brewaries
+ where  city =:city]]></db:sql>
+			<db:input-parameters><![CDATA[#[{
+	city: payload
+}]]]></db:input-parameters>
+		</db:select>
+					<ee:transform doc:name="Transform Message" doc:id="839045df-5481-436e-8d01-8684393e95b5">
+								<ee:message>
+									<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+								</ee:message>
+							</ee:transform>
+							<ee:transform doc:name="Transform Message" doc:id="b033a551-8f54-48c8-a6ef-f8b8f055509f">
+						<ee:message>
+						</ee:message>
+						<ee:variables>
+							<ee:set-variable variableName="cy"><![CDATA[%dw 2.0
+output application/json
+---
+payload ++ vars.cy]]></ee:set-variable>
+						</ee:variables>
+					</ee:transform>
+				</foreach>
+						<ee:transform doc:name="Transform Message" doc:id="f51569fe-0db0-4ec7-9706-ab95c958ff11">
+								<ee:message>
+									<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+vars.cy]]></ee:set-payload>
+								</ee:message>
+							</ee:transform>
+						<flow-ref doc:name="Flow Reference" doc:id="009687fa-6ee0-47ba-8a7d-4ed7a88cfb1a" name="brewary-papiSub_Flow" />
+					</when>
+					<otherwise>
+						<flow-ref doc:name="CitiesApi" doc:id="d099dfa9-73a4-4e4c-896e-ceaa861aecfd" name="cities-api-subflow" />
+						<flow-ref doc:name="Flow Reference" doc:id="3458de32-5140-4800-ac3f-22c2ff5795dd" name="brewary-papiSub_Flow" />
+					</otherwise>
+				</choice>
+
+			</when>
+			<otherwise>
+				<logger level="INFO" doc:name="Logger" doc:id="2050e647-f4e7-458c-89d3-56d140138230" message='#["no parameters"]' />
+			</otherwise>
+		</choice>
+	</sub-flow>
+</mule>
